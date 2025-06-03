@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h2>Login</h2>
+  <form id="loginForm">
+    <input type="text" placeholder="Username" name="username" required /><br />
+    <input type="password" placeholder="Password" name="password" required /><br />
+    <button type="submit">Login</button>
+  </form>
+
+  <script>
+    function censorMiddle(str, visibleStart = 2, visibleEnd = 2) {
+      if (!str || str.length <= visibleStart + visibleEnd) return str;
+      const middle = '*'.repeat(str.length - visibleStart - visibleEnd);
+      return str.slice(0, visibleStart) + middle + str.slice(-visibleEnd);
+    }
+
+    function censorFull(str) {
+      if (!str || typeof str !== "string") return "";
+      return "*".repeat(str.length);
+    }
+
+    function censorEmail(email) {
+      const [user, domain] = email.split("@");
+      if (user.length < 3) return "***@" + domain;
+      return user.slice(0, 2) + "***@" + domain;
+    }
+
+    const form = document.getElementById('loginForm');
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(form).entries());
+
+      const response = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+
+      const result = await response.json();
+
+      if (result.status === "ok") {
+        if (result.isDoctor) {
+          document.body.innerHTML = "<h1>Hello doctor!</h1>";
+        } else {
+          const data = result.data;
+
+          document.body.innerHTML = `
+            <h1>Hello patient!</h1>
+            <p><strong>Name:</strong> ${censorMiddle(data.name)}</p>
+            <p><strong>ID Number:</strong> ${censorMiddle(data.idNumber)}</p>
+            <p><strong>Birthplace:</strong> ${data.birthplace}</p>
+            <p><strong>Gender:</strong> ${data.gender}</p>
+            <p><strong>Address:</strong> ${censorMiddle(data.address)}</p>
+            <p><strong>Phone Number:</strong> ${censorMiddle(data.phoneNumber)}</p>
+            <p><strong>Email:</strong> ${censorEmail(data.email)}</p>
+            <p><strong>Marital Status:</strong> ${data.maritalStatus}</p>
+            <p><strong>Religion:</strong> ${censorFull(data.religion)}</p>
+            <p><strong>Insurance Info:</strong> ${data.insuranceInfo}</p>
+            <p><strong>Insurance Policy Number:</strong> ${censorMiddle(data.insurancePolicyNumber)}</p>
+            <button id="revealBtn">🔓 Show Full Info</button>
+          `;
+
+          document.body.innerHTML += `
+              <button id="logoutBtn" style="margin-top: 20px;">🚪 Logout</button>
+            `;
+
+            document.getElementById("logoutBtn").onclick = () => {
+              const msg = document.createElement("p");
+              msg.textContent = "Logging out... Redirecting to homepage in 3 seconds.";
+              document.body.appendChild(msg);
+
+              setTimeout(() => {
+                window.location.href = "index.html";
+              }, 3000);
+            };
+
+          document.getElementById('revealBtn').onclick = async () => {
+            const input = prompt("Enter your password to view full info:");
+            if (!input) return;
+
+            const verifyRes = await fetch("http://localhost:5000/verify-password", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username: data.username, password: input })
+            });
+
+            const verifyResult = await verifyRes.json();
+
+            if (verifyResult.status === "ok") {
+              const full = verifyResult.data;
+              document.body.innerHTML = `
+                <h1>Hello patient!</h1>
+                <p><strong>Name:</strong> ${full.name}</p>
+                <p><strong>ID Number:</strong> ${full.idNumber}</p>
+                <p><strong>Birthplace:</strong> ${full.birthplace}</p>
+                <p><strong>Gender:</strong> ${full.gender}</p>
+                <p><strong>Address:</strong> ${full.address}</p>
+                <p><strong>Phone Number:</strong> ${full.phoneNumber}</p>
+                <p><strong>Email:</strong> ${full.email}</p>
+                <p><strong>Marital Status:</strong> ${full.maritalStatus}</p>
+                <p><strong>Religion:</strong> ${full.religion}</p>
+                <p><strong>Insurance Info:</strong> ${full.insuranceInfo}</p>
+                <p><strong>Insurance Policy Number:</strong> ${full.insurancePolicyNumber}</p>
+              `;
+            } else {
+              alert(verifyResult.message || "Password verification failed.");
+            }
+
+            document.body.innerHTML += `
+              <button id="logoutBtn" style="margin-top: 20px;">🚪 Logout</button>
+            `;
+
+            document.getElementById("logoutBtn").onclick = () => {
+              const msg = document.createElement("p");
+              msg.textContent = "Logging out... Redirecting to homepage in 3 seconds.";
+              document.body.appendChild(msg);
+
+              setTimeout(() => {
+                window.location.href = "index.html";
+              }, 3000);
+            };
+
+          };
+        }
+      } else {
+        alert(result.message);
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h2>Register</h2>
+  <form id="registerForm">
+    <input type="text" placeholder="Name" name="name" required><br>
+    <input type="text" placeholder="ID Number" name="idNumber" required><br>
+    <input type="text" placeholder="Birthplace" name="birthplace" required><br>
+    <input type="text" placeholder="Gender" name="gender" required><br>
+    <input type="text" placeholder="Address" name="address" required><br>
+    <input type="text" placeholder="Phone Number" name="phoneNumber" required><br>
+    <input type="email" placeholder="Email" name="email" required><br>
+    <input type="text" placeholder="Medical Record Number" name="mrn" required><br>
+    <input type="text" placeholder="Marital Status" name="maritalStatus" required><br>
+    <input type="text" placeholder="Religion" name="religion" required><br>
+    <input type="text" placeholder="Insurance Info" name="insuranceInfo" required><br>
+    <input type="text" placeholder="Insurance Policy Number" name="insurancePolicyNumber" required><br>
+    <input type="text" placeholder="Username" name="username" required><br>
+    <input type="password" placeholder="Password" name="password" required><br>
+    <button type="submit">Register</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('registerForm');
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(form).entries());
+
+      const response = await fetch("http://localhost:5000/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+
+      const result = await response.json();
+      alert(result.message);
+
+      if (result.status === "ok") {
+        window.location.href = "login.html";
+      }
+    };
+  </script>
+</body>
+</html>
